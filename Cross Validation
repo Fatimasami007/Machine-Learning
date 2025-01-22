@@ -1,0 +1,76 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import StratifiedKFold
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+# Step 1: Load your dataset
+# Replace 'path_to_your_dataset.csv' and 'target_column_name' with actual values
+data = pd.read_csv("parkinson_labeled.csv")
+
+# Split dataset into features (X) and target (y)
+# Drop the 'ID' column as it's likely not a relevant feature for the model
+X = data.drop(columns=["Labels", "ID"])  # Dropping both "Labels" and "ID"
+y = data["Labels"]
+
+
+# Encode target labels (if not already numeric)
+if y.dtype == "object" or y.dtype.name == "category":
+    le = LabelEncoder()
+    y = le.fit_transform(y)
+
+# Step 3: Define classifiers
+classifiers = {
+    "KNN": KNeighborsClassifier(n_neighbors=5),
+    "SVM Linear": SVC(kernel="linear", probability=True, random_state=42),
+    "SVM Non-Linear": SVC(kernel="rbf", probability=True, random_state=42),
+    "MLP": MLPClassifier(max_iter=1000, random_state=42),
+    "Random Forest": RandomForestClassifier(random_state=42),
+    "Logistic Regression": LogisticRegression(random_state=42),
+}
+
+# Step 4: Initialize Stratified K-Fold
+stratified_kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+# Step 5: Perform shared cross-validation
+results = {name: [] for name in classifiers}  # Store results for each classifier
+metrics = ["accuracy", "precision", "recall", "f1"]
+
+print("Starting Cross-Validation...\\n")
+for train_index, test_index in stratified_kfold.split(X, y):
+    # Split the dataset into train and test sets
+   X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+   y_train, y_test = y[train_index], y[test_index]
+
+    # Loop through classifiers
+for name, clf in classifiers.items():
+        # Train and predict
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+
+        # Compute metrics
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred)
+        recall = recall_score(y_test, y_pred)
+        f1 = f1_score(y_test, y_pred)
+
+        # Store metrics
+        results[name].append({
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1": f1
+        })
+
+# Step 6: Summarize results for each classifier
+print("\\nCross-Validation Summary:")
+for name, metrics_list in results.items():
+    print(f"\\nClassifier: {name}")
+    for metric in metrics:
+        values = [fold_metrics[metric] for fold_metrics in metrics_list]
+        print(f"  {metric.capitalize()}: {np.mean(values):.4f} \u00b1 {np.std(values):.4f}")
