@@ -1,0 +1,14 @@
+# Load the Parkinson's Disease dataset
+df_parkinsons = pd.read_csv("/content/parkinsons_labeled.csv", index_col=0)
+
+# Splitting features (X) and labels (y)
+X = df_parkinsons.iloc[:, :-1]  # All columns except the last one as features
+y = df_parkinsons['Labels']    # The last column as labels
+
+# Splitting the dataset into training and testing sets
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=42)
+
+# Print confirmation of data split
+print("Training and testing data split completed.")
+
