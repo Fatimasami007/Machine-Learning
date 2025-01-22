@@ -1,0 +1,68 @@
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, roc_auc_score
+import matplotlib.pyplot as plt
+from sklearn.neighbors import KNeighborsClassifier
+
+# Train the KNN model
+KNN = KNeighborsClassifier(n_neighbors=7, metric='minkowski', p=1)
+KNN.fit(X_train, Y_train)
+
+# Predict samples in the test set
+prediction = KNN.predict(X_test)
+
+# Calculate Accuracy
+Accuracy = accuracy_score(Y_test, prediction)
+print('Accuracy:', Accuracy)
+
+# Calculate Precision
+Precision = precision_score(Y_test, prediction)
+print('Precision:', Precision)
+
+# Calculate Recall
+Recall = recall_score(Y_test, prediction)
+print('Recall:', Recall)
+
+# Calculate F1 score
+F1 = f1_score(Y_test, prediction)
+print('F1 score:', F1)
+
+# Calculate confusion matrix
+cm = confusion_matrix(Y_test, prediction)
+
+# Calculate Specificity and Sensitivity
+TN, FP, FN, TP = cm.ravel()
+Specificity = TN / (TN + FP)
+Sensitivity = TP / (TP + FN)
+print('Specificity:', Specificity)
+print('Sensitivity:', Sensitivity)
+
+# Display the confusion matrix
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=KNN.classes_)  # KNN.classes_ contains your class labels
+disp.plot(cmap=plt.cm.Greens)
+plt.xlabel('Predicted label', color='black')
+plt.ylabel('True label', color='black')
+plt.gca().tick_params(axis='x', colors='white')  # Modify ticks on x-axis
+plt.gca().tick_params(axis='y', colors='white')  # Modify ticks on y-axis
+plt.gcf().set_size_inches(10, 6)
+plt.savefig("KNN.png", dpi=600)
+plt.show()
+
+# Calculate ROC curve and AUC
+KNN_probs = KNN.predict_proba(X_test)
+KNN_probs = KNN_probs[:, 1]
+KNN_auc = roc_auc_score(Y_test, KNN_probs)
+KNN_fpr, KNN_tpr, _ = roc_curve(Y_test, KNN_probs)
+
+# Plot the ROC curve
+fig = plt.figure(figsize=(7, 5))
+plt.plot(KNN_fpr, KNN_tpr, label='KNN = %.3f' % (KNN_auc))
+params = {'legend.fontsize': 10,
+          'legend.handlelength': 2}
+plt.rcParams.update(params)
+plt.legend()
+plt.ylabel('True Positive Rate', fontsize=15)
+plt.xlabel('False Positive Rate', fontsize=15)
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+plt.legend()
+plt.show()
